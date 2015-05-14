@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Are We There Yet?</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="message">Enter the message you want to send:</string>
+    <string name="phone">Enter the your recipient\'s phone number:</string>
+    <string name="time">How often do you want to send the message? (in minutes):</string>
+    <string name="action_settings">Settings</string>
+    <string name="messageEdit">Are we there yet?</string>
+    <string name="phoneEdit">911-411-9141</string>
+    <string name="timeEdit">5</string>
+    <string name="start">Start</string>
+
+
+</resources>
