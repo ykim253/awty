@@ -1,7 +1,10 @@
 package edu.washington.ykim253.awty;
 
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.app.AlarmManager;
@@ -23,6 +26,9 @@ public class MainActivity extends ActionBarActivity {
     private Intent service;
     private AlarmManager aM;
     private PendingIntent pendingIntent;
+    private String text;
+    private String phoneNumber;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +40,26 @@ public class MainActivity extends ActionBarActivity {
         editPhone = (EditText) findViewById(R.id.phoneEdit);
         editTime = (EditText) findViewById(R.id.timeEdit);
 
-        service = new Intent(MainActivity.this, Alarm.class);
+        BroadcastReceiver alarm = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                try{
+                    SmsManager smsManager = SmsManager.getDefault();
+                    smsManager.sendTextMessage(phoneNumber, null, text, null, null);
+                    Toast.makeText(context, "Text sent", Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(context, "Text failed" , Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                }
+            }
+        };
+        aM = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
 
+        registerReceiver(alarm, new IntentFilter("edu.washington.ykim253.alarm"));
+
+        Intent forAlarm = new Intent();
+        forAlarm.setAction(("edu.washington.ykim253.alarm"));
+        pendingIntent = PendingIntent.getBroadcast(this, 0, forAlarm, 0);
     }
 
     public void onClick(View v) {
@@ -43,7 +67,7 @@ public class MainActivity extends ActionBarActivity {
             Toast.makeText(this, "Have all information filled please", Toast.LENGTH_SHORT).show();
         } else {
 
-            String phoneNumber = editPhone.getText().toString();
+            phoneNumber = editPhone.getText().toString();
 
             //which service is it on? (start or stop)
             if(btnStart.getText().toString().equals("Start")) {
@@ -60,14 +84,11 @@ public class MainActivity extends ActionBarActivity {
                             int interval = Integer.parseInt(time);
                             if(interval > 0) {
                                 btnStart.setText("Stop");
-                                service.putExtra("text", editText.getText().toString());
-                                service.putExtra("phoneNum", phoneNumber);
-                                aM = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-                                pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, service, PendingIntent.FLAG_UPDATE_CURRENT);
+                                text = editText.getText().toString();
                                 aM.setInexactRepeating(AlarmManager.RTC_WAKEUP,
                                         System.currentTimeMillis(),
-                                        interval*1000, pendingIntent);
-                                Toast.makeText(this, phoneNumber + ": " + editText.getText().toString(), Toast.LENGTH_SHORT).show();
+                                        interval*60000, pendingIntent);
+                                Toast.makeText(this, "Success: Getting to You Now" , Toast.LENGTH_SHORT).show();
                             } else {
                                 Toast.makeText(this, "Enter a value greater than 0", Toast.LENGTH_SHORT).show();
                             }
@@ -80,10 +101,6 @@ public class MainActivity extends ActionBarActivity {
                 }
             } else {
                 btnStart.setText("Start");
-                service = new Intent(this, Alarm.class);
-                pendingIntent = PendingIntent.getBroadcast(this, 0, service, 0);
-                aM = (AlarmManager) getSystemService(ALARM_SERVICE);
-                pendingIntent.cancel();
                 aM.cancel(pendingIntent);
                 Toast.makeText(this, "Service Stopped", Toast.LENGTH_SHORT).show();
             }
@@ -93,9 +110,6 @@ public class MainActivity extends ActionBarActivity {
 
     public void onDestroy() {
         super.onDestroy();
-        service = new Intent(this, Alarm.class);
-        pendingIntent = PendingIntent.getBroadcast(this, 0, service, 0);
-        aM = (AlarmManager) getSystemService(ALARM_SERVICE);
         pendingIntent.cancel();
         aM.cancel(pendingIntent);
         Toast.makeText(this, "Service Stopped", Toast.LENGTH_SHORT).show();
